@@ -1,0 +1,7 @@
+/test
+.venv
+.vscode
+.env
+bash.exe.stackdump
+TODO
+paths.json

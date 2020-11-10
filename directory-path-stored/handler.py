@@ -1,43 +1,76 @@
+import os
 import argparse
+from os.path import join
 
+import pyperclip
+from termcolor import colored, cprint
 
-def config_parser(parser: argparse.ArgumentParser):
-    shortcut_name = parser.add_argument_group('Shortcut Name')
-    shortcut_name.add_argument("-n", "--name", help="name of the directory as shortcut")
+from database import JsonDatabase
 
-    options = parser.add_mutually_exclusive_group()
-    options.add_argument("-l", "--list", help="list of shortcuts directories",
-                    action="store_true")
-    options.add_argument("-s", "--save", help="save directory with the PATH",
-                    metavar="PATH")
-    options.add_argument("-u", "--update", help="update shortcut directory PATH, if exists", 
-                    action="store_true")
-    options.add_argument("-d", "--delete", help="delete shortcut directory name", 
-                    action="store_true")
-    options.add_argument("-v", "--view", help="print shortcut directory by the '--name' argument", 
-                    action="store_true")
+text = colored('Hello, World!', 'red', attrs=['reverse', 'blink'])
+# print(text)
+# cprint('Hello, World!', 'green', )
 
-    return parser
+def handle_args(args: argparse.Namespace):
+    if not os.path.isfile(JsonDatabase()._get_json_path()):
+        print('creating...')
+        JsonDatabase().create()
 
-def get_exceptions(parser: argparse.ArgumentParser, args: argparse.Namespace):
-    if args.name and args.list:
-        parser.error("argument -n/--name: not allowed with argument -l/--list")
+    if args.name:
+        dir_name = args.name
 
-# print(args.name)
-# parser.error('to use this option, the following argument is required: -n NAME')
+        if args.save:
+            path = _get_compatible_path(args.save)
+            save_directory(dir_name, path)
 
-def get_args(optional_args: list = None):
-    parser = argparse.ArgumentParser(prog="dps")
-    parser = config_parser(parser)
+        elif args.update:
+            path = _get_compatible_path(args.update)
+            update_directory(dir_name, path)
+
+        elif args.view:
+            view_directory(dir_name)
+
+        elif args.delete:
+            delete_directory(dir_name)
+
+        else:
+            copy_path(dir_name)
+
+    elif args.list:
+        display_directories()    
     
-    if optional_args:
-        args = parser.parse_args(optional_args)
-    else:
-        # Use args from terminal
-        args = parser.parse_args()
 
-    get_exceptions(parser, args)
+def save_directory(dir_name, path):
+    cprint('saving', 'magenta')
+    db = JsonDatabase()
+    db.save(dir_name, path)
+
+
+def update_directory(dir_name, path):
+    cprint('updating', 'magenta')
+    JsonDatabase().update(dir_name, path)
+
     
-    return args 
+def view_directory(dir_name):
+    cprint('viewing', 'magenta')
+    print(f'{dir_name}: {repr(JsonDatabase().get_directory_path(dir_name))}')
 
 
+def delete_directory(dir_name):
+    cprint('deleting', 'magenta')
+    JsonDatabase().delete(dir_name)
+
+
+def copy_path(dir_name):
+    cprint('copying', 'magenta')
+    path = JsonDatabase().get_directory_path(dir_name)
+    if path:
+        pyperclip.copy(f'cd "{path}"')
+
+
+def display_directories():
+    cprint('displaying directories', 'magenta')
+
+
+def _get_compatible_path(path: str):
+    return os.path.normpath(path.replace('\ ', ' ').replace('\:', ':')).strip("\'\"")

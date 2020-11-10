@@ -1,29 +1,22 @@
 import sys
+import os
+os.chdir(os.path.dirname(__file__))
+print(os.getcwd())
 
 import colorama
-import pyperclip
-from termcolor import colored, cprint
 
-from handler import get_args
-from database import JsonDatabase
+import handler
+from dps_parser import get_args
 
 colorama.init()
 
 
 def main():
+    # ['-n', 'git', '-u', 'D\:/Diego\ Oliveira\ Silva/Documents/GitHub/']
     args = get_args()
 
-    db = JsonDatabase()
-    # db.create()
-    db.list_directories()
-    db.update('MyProject', 'C:\\')
-    print(args)
-
-    pyperclip.copy("Hello World!")
-
-text = colored('Hello, World!', 'red', attrs=['reverse', 'blink'])
-print(text)
-cprint('Hello, World!', 'green', )
+    handler.handle_args(args)
+    
 
 if __name__ == '__main__':
     main()
